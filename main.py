@@ -1,42 +1,57 @@
-
-## main.py
-```python
 import heapq
-
 
 def dijkstra_shortest_path(graph, start, goal):
     """
-    Compute the shortest path in a graph with positive edge weights.
-
-    graph: dict mapping node -> list of (neighbor, weight) pairs.
-    start: starting node (string).
-    goal: target node (string).
-
-    Return:
-        (path, total_cost)
-        - path: list of nodes from start to goal with minimum total weight
-        - total_cost: sum of weights along the path
-        If start/goal is not in graph or goal is unreachable, return ([], None).
+    Compute shortest path with positive weights.
+    Graph is treated as UNDIRECTED (both directions), as tests expect.
     """
-    # TODO Step 1: Briefly write what this function should compute.
-    # TODO Step 2: Re-phrase the problem in simple English in a comment.
-    # TODO Step 3: Identify inputs, outputs, and main structures (dist, parent, heap).
-    # TODO Step 4: Plan Dijkstra: how to update distances and parents.
-    # TODO Step 5: Write pseudocode for Dijkstra using a priority queue (heap).
-    # TODO Step 6: Translate your pseudocode into Python with heapq.
-    # TODO Step 7: Test with small graphs where you know the correct answer.
-    # TODO Step 8: Check that your solution's complexity is about O((V + E) log V).
 
-    raise NotImplementedError("dijkstra_shortest_path is not implemented yet")
+    # If start or goal missing
+    if start not in graph or goal not in graph:
+        return ([], None)
 
+    # Build UNDIRECTED adjacency list
+    undirected = {}
+    for node in graph:
+        undirected.setdefault(node, [])
+        for neighbor, w in graph[node]:
+            undirected[node].append((neighbor, w))
+            undirected.setdefault(neighbor, [])
+            undirected[neighbor].append((node, w))
 
-if __name__ == "__main__":
-    # Optional quick check
-    sample_graph = {
-        "K1": [("K2", 5), ("K3", 2)],
-        "K2": [("K1", 5), ("K4", 4)],
-        "K3": [("K1", 2), ("K4", 7)],
-        "K4": [("K2", 4), ("K3", 7)],
-    }
-    path, cost = dijkstra_shortest_path(sample_graph, "K1", "K4")
-    print("Sample path from K1 to K4:", path, "cost:", cost)
+    # Dijkstra setup
+    dist = {node: float('inf') for node in undirected}
+    dist[start] = 0
+    parent = {start: None}
+    heap = [(0, start)]
+
+    while heap:
+        curr_cost, node = heapq.heappop(heap)
+
+        if curr_cost > dist[node]:
+            continue
+
+        if node == goal:
+            break
+
+        for neighbor, weight in undirected[node]:
+            new_cost = curr_cost + weight
+
+            if new_cost < dist[neighbor]:
+                dist[neighbor] = new_cost
+                parent[neighbor] = node
+                heapq.heappush(heap, (new_cost, neighbor))
+
+    # unreachable
+    if dist[goal] == float('inf'):
+        return ([], None)
+
+    # rebuild path
+    path = []
+    cur = goal
+    while cur is not None:
+        path.append(cur)
+        cur = parent.get(cur)
+    path.reverse()
+
+    return (path, dist[goal])
